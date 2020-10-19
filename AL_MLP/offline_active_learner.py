@@ -31,16 +31,20 @@ class OfflineActiveLearner:
         The trainer_calc should produce an ase Calculator instance
         capable of force and energy calculations via trainer_calc(trainer)
         
+    ensemble: boolean.
+    Whether to train an ensemble of models to make predictions. ensemble
+    must be True if uncertainty based query methods are to be used. 
      """
     
-    def __init__(self, learner_settings, trainer, training_data, parent_calc, base_calc, trainer_calc):
-        self.learner_settings = learner_settings
+    def __init__(self, learner_params, trainer, training_data, parent_calc, base_calc, trainer_calc,Ensemble=False):
+        self.learner_params = learner_params
         self.trainer = trainer
         self.training_data = training_data
         self.parent_calc = parent_calc
         self.base_calc = base_calc
         self.trainer_calc_func = trainer_calc
         self.calcs = [parent_calc, base_calc]
+        self.ensemble = ensemble
         self.init_training_data()
         
     def init_training_data(self):
@@ -68,7 +72,7 @@ class OfflineActiveLearner:
         """
         
         self.iterations = 0
-        
+          
         while not terminate:
             if self.iterations > 0:
                 self.query_data(sample_candidates)

@@ -4,12 +4,12 @@ from distutils.core import setup
 from setuptools import find_packages
 
 setup(
-    name="AL_MLP",
+    name="al_mlp",
     version="0.1",
     description="Active Learning for Machine Learning Potentials",
     author="Rui Qi Chen",
     author_email="ruiqic@andrew.cmu.edu",
-    url="https://github.com/ulissigroup/AL_MLP",
+    url="https://github.com/ulissigroup/al_mlp",
     packages=find_packages(),
     include_package_data=True,
     install_requires=[

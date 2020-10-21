@@ -1,8 +1,10 @@
 import random
+import os
 #from amptorch.ase_utils import AMPtorch
 #from amptorch.trainer import AtomsTrainer
 from al_mlp.calcs import DeltaCalc
 from al_mlp.utils import convert_to_singlepoint, compute_with_calc
+import ase.db
 
 
 class OfflineActiveLearner:
@@ -70,9 +72,14 @@ class OfflineActiveLearner:
         atomistic_method: object
             Define relaxation parameters and starting image.
         """
-        
+        max_iterations = self.learner_params["max_iterations"]
+        samples_to_retrain = self.learner_params["samples_to_retrain"]
+        filename = self.learner_params["filename"]
+        file_dir = self.learner_params["file_dir"]
+        queries_db = ase.db.connect("{}.db".format(filename))
+        os.makedirs(file_dir, exist_ok=True)
         self.iterations = 0
-          
+
         while not terminate:
             if self.iterations > 0:
                 self.query_data(sample_candidates)
@@ -80,8 +87,9 @@ class OfflineActiveLearner:
             self.trainer.train(self.training_data)
             trainer_calc = self.trainer_calc_func(self.trainer)
             trained_calc = DeltaCalc([trainer_calc, self.base_calc], "add", self.refs)
-            
+            # run atomistic_method using trained ml calculator  
             atomistic_method.run(calc=trained_calc, filename="relax")
+            #collect trajectory file
             sample_candidates = atomistic_method.get_trajectory(filename="relax")
             
             terminate = self.check_terminate()
@@ -102,20 +110,22 @@ class OfflineActiveLearner:
         queried_images = self.query_func(sample_candidates)
         for image in queried_images:
             image.calc = None
-        self.training_data += compute_with_calc(queried_images, self.delta_sub_calc)
+        queried_images = compute_with_calc(queried_images,self.delta_sub_calc)
+        self.training_data += queried_images
+        
     
-    def check_terminate():
+    def check_terminate(max_iterations):
         """
-        Default termination function. Teminates after 10 iterations
+        Default termination function. Teminates after a specified number of iterations.
         """
-        if self.iterations >= 10:
+        if self.iterations >= max_iterations:
             return True
         return False
         
-    def query_func(sample_candidates):
+    def query_func(sample_candidates,samples_to_retrain):
         """
-        Detault query strategy. Randomly queries 1 data point.
+        Detault query strategy. 
         """
-        queried_images = random.sample(sample_candidates,1)
+        queried_images = random.sample(sample_candidates,samples_to_retrain)
         return queried_images
         

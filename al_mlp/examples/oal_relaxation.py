@@ -58,7 +58,8 @@ learner_params = {
         "max_iterations": 10,
         "samples_to_retrain": 1,
         "filename":"relax_example",
-        "file_dir":"./"
+        "file_dir":"./",
+        "uncertain_tol": 0.05
         }
 
 config = {
@@ -94,7 +95,7 @@ parent_calc = EMT()
 base_calc = morse() 
 trainer_calc = TrainerCalc(trainer) 
 
-learner = OfflineActiveLearner(
+onlinecalc = OnlineActiveLearner(
              learner_params,
              trainer=AtomsTrainer(config),
              training_data=images[0].copy,
@@ -102,8 +103,9 @@ learner = OfflineActiveLearner(
              base_calc=morse(),
              trainer_calc=TrainerCalc(trainer))
 
+structure_optim = Relaxation(slab,BFGS,fmax=0.05,steps = 100)
 
+structure_optim.run(onlinecalc,filename="relax_oal")
 
-learner.learn(atomistic_method=Relaxation(initial_geometry=images[0].copy(),optimizer=BFGS,fmax=0.05,steps=50)
 
 

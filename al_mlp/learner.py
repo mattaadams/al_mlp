@@ -104,7 +104,7 @@ class OfflineActiveLearner:
             
         return trained_calc
             
-    def query_data(self, sample_candidates):
+    def query_data(self, sample_candidates,samples_to_retrain):
         """
         Queries data from a list of images. Calculates the properties and adds them to the training data.
         
@@ -114,7 +114,7 @@ class OfflineActiveLearner:
         sample_candidates: list
             List of ase atoms objects to query from.
         """
-        queried_images = self.query_func(sample_candidates)
+        queried_images = self.query_func(sample_candidates,sample_to_retrain)
         for image in queried_images:
             image.calc = None
         queried_images = compute_with_calc(queried_images,self.delta_sub_calc)

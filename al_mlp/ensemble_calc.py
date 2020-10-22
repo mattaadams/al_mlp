@@ -50,7 +50,7 @@ class EnsembleCalc(Calculator):
         self.results["forces"] = force_pred
         atoms.info["uncertainty"] = np.array([uncertainty])
     
-    def make_ensemble(ensemble_datasets,trainer,n_cores):
+    def make_ensemble(ensemble_datasets,trainer,base_calc,n_cores):
         if n_cores == "max":
              ncores = len(ensemble_datasets)
         pool = Pool(ncores)
@@ -62,7 +62,8 @@ class EnsembleCalc(Calculator):
         calc_parameters = pool.starmap(trainer, input_data)
         pool.close()
         pool.join()
-        trained_calcs = DeltaCalc([trainer_calc, self.base_calc], "add", self.refs)
+        trainer_calc =  trainer_calc_func(trainer)
+        trained_calcs = [DeltaCalc([trainer_calc, base_calc], "add", self.refs) for params in calc_parameters]
         ensemble_calc = EnsembleCalc(trained_calcs, training_params)
              return ensemble_calc  
    

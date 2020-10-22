@@ -31,31 +31,43 @@ class OnlineActiveLearner(Calculator):
 
     parent_calc: ase Calculator object
         Calculator used for querying training data.
-        
+            
     n_ensembles: int.
-    n_ensemble of models to make predictions.
+   	 n_ensemble of models to make predictions.
     
     n_cores: int.
-    n_cores used to train ensembles. 
+    	 n_cores used to train ensembles.
+
+    parent_calc: ase Calculator object
+        Calculator used for querying training data.
+        
+    base_calc: ase Calculator object
+        Calculator used to calculate delta data for training.
+        
+    trainer_calc: uninitialized ase Calculator object
+        The trainer_calc should produce an ase Calculator instance
+        capable of force and energy calculations via TrainerCalc(trainer) 
     """
 
     implemented_properties = ["energy", "forces"]
 
     def __init__(
-        self, learner_params, parent_dataset, parent_calc,trainer, n_ensembles, n_cores
+        self, learner_params, parent_dataset, parent_calc,base_calc,trainer,trainer_calc, n_ensembles, n_cores
     ):
         Calculator.__init__(self)
 
         self.n_ensembles = n_ensembles
         self.parent_calc = parent_calc
+        self.base_calc = base_calc
         self.trainer = trainer
+        self.trainer_calc_func = trainer_calc
         self.learner_params = learner_params
         self.n_cores = n_cores
         self.ensemble_sets, self.parent_dataset = bootstrap_ensemble(
             parent_dataset, n_ensembles=n_ensembles
         )
         self.ensemble_calc = make_ensemble(
-            self.ensemble_sets, self.trainer, self.n_cores
+            self.ensemble_sets, self.trainer,self.base_calc, self.n_cores
         )
 
         self.uncertain_tol = learner_params["uncertain_tol"]

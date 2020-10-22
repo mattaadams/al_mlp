@@ -3,7 +3,7 @@ import os
 #from amptorch.ase_utils import AMPtorch
 #from amptorch.trainer import AtomsTrainer
 from al_mlp.calcs import DeltaCalc
-from al_mlp.utils import convert_to_singlepoint, compute_with_calc
+from al_mlp.al_utils import convert_to_singlepoint, compute_with_calc
 import ase.db
 
 
@@ -31,7 +31,7 @@ class OfflineActiveLearner:
         
     trainer_calc: uninitialized ase Calculator object
         The trainer_calc should produce an ase Calculator instance
-        capable of force and energy calculations via trainer_calc(trainer)
+        capable of force and energy calculations via TrainerCalc(trainer)
         
     ensemble: boolean.
     Whether to train an ensemble of models to make predictions. ensemble
@@ -48,7 +48,13 @@ class OfflineActiveLearner:
         self.calcs = [parent_calc, base_calc]
         self.ensemble = ensemble
         self.init_training_data()
-        
+        if ensemble:
+             assert isinstance(ensemble,ent) and ensemble > 1, "Invalid ensemble!"
+             self.training_data, self.parent_dataset = bootstrap_ensemble(
+                self.training_data, n_ensembles=ensemble
+             )
+        else:
+             self.parent_dataset = self.training_data 
     def init_training_data(self):
         """
         Prepare the training data by attaching delta values for training.
@@ -81,6 +87,7 @@ class OfflineActiveLearner:
         self.iterations = 0
 
         while not terminate:
+            fn_label = f"{file_dir}{filename}_iter_{self.iteration}"
             if self.iterations > 0:
                 self.query_data(sample_candidates)
                 
@@ -88,9 +95,9 @@ class OfflineActiveLearner:
             trainer_calc = self.trainer_calc_func(self.trainer)
             trained_calc = DeltaCalc([trainer_calc, self.base_calc], "add", self.refs)
             # run atomistic_method using trained ml calculator  
-            atomistic_method.run(calc=trained_calc, filename="relax")
+            atomistic_method.run(calc=trained_calc, filename=fn_label)
             #collect trajectory file
-            sample_candidates = atomistic_method.get_trajectory(filename="relax")
+            sample_candidates = atomistic_method.get_trajectory(filename=fn_label)
             
             terminate = self.check_terminate()
             self.iterations += 1

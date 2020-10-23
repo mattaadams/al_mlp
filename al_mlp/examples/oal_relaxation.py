@@ -1,8 +1,10 @@
 import numpy as np
 import ase
 import copy
-from al_mlp.learner import OfflineActiveLearner
+from al_mlp.online_learner import OnlineActiveLearner
+from al_mlp.calcs import TrainerCalc
 from ase.calculators.emt import EMT
+from ase.calculators.morse import MorsePotential
 from ase import Atoms
 from amptorch.ase_utils import AMPtorch
 from amptorch.trainer import AtomsTrainer
@@ -87,21 +89,17 @@ config = {
         # "logger": True,
     },
 }
-
 trainer = AtomsTrainer(config)
-
-training_data = images[0].copy
-parent_calc = EMT()
-base_calc = morse() 
-trainer_calc = TrainerCalc(trainer) 
 
 onlinecalc = OnlineActiveLearner(
              learner_params,
              trainer=AtomsTrainer(config),
-             training_data=images[0].copy,
+             parent_dataset=images,
              parent_calc=EMT(),
-             base_calc=morse(),
-             trainer_calc=TrainerCalc(trainer))
+             base_calc=MorsePotential(),
+             trainer_calc=TrainerCalc(trainer),
+             n_ensembles=2,
+             n_cores='max')
 
 structure_optim = Relaxation(slab,BFGS,fmax=0.05,steps = 100)
 

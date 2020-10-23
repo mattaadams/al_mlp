@@ -6,10 +6,10 @@ import pandas as pd
 from ase.db import connect
 from ase.calculators.singlepoint import SinglePointCalculator as sp
 from ase.calculators.calculator import Calculator
-
+from al_mlp.al_utils import convert_to_singlepoint, compute_with_calc
 from al_mlp.bootstrap import bootstrap_ensemble
-from al_mlp.trainer import ensemble_trainer
-
+from al_mlp.ensemble_calc import make_ensemble
+from al_mlp.calcs import DeltaCalc
 
 __author__ = "Muhammed Shuaibi"
 __email__ = "mshuaibi@andrew.cmu.edu"
@@ -25,7 +25,7 @@ class OnlineActiveLearner(Calculator):
     trainer: object
         An isntance of a trainer that has a train and predict method.
         
-    training_data: list
+    parent_dataset: list
         A list of ase.Atoms objects that have attached calculators.
         Used as the first set of training data.
 
@@ -59,6 +59,7 @@ class OnlineActiveLearner(Calculator):
         self.n_ensembles = n_ensembles
         self.parent_calc = parent_calc
         self.base_calc = base_calc
+        self.calcs = [parent_calc, base_calc]
         self.trainer = trainer
         self.trainer_calc_func = trainer_calc
         self.learner_params = learner_params
@@ -66,12 +67,26 @@ class OnlineActiveLearner(Calculator):
         self.ensemble_sets, self.parent_dataset = bootstrap_ensemble(
             parent_dataset, n_ensembles=n_ensembles
         )
+        self.init_training_data()
         self.ensemble_calc = make_ensemble(
-            self.ensemble_sets, self.trainer,self.base_calc, self.n_cores
+            self.ensemble_sets, self.trainer,self.base_calc,self.refs, self.n_cores
         )
 
         self.uncertain_tol = learner_params["uncertain_tol"]
         self.parent_calls = 0
+    def init_training_data(self):
+        """
+        Prepare the training data by attaching delta values for training.
+        """
+        raw_data = self.parent_dataset
+        sp_raw_data = convert_to_singlepoint(raw_data)
+        parent_ref_image = sp_raw_data[0].copy()
+        base_ref_image = compute_with_calc(sp_raw_data[:1],self.base_calc)[0]
+        self.refs = [parent_ref_image, base_ref_image]
+        self.delta_sub_calc = DeltaCalc(self.calcs, "sub", self.refs)
+        self.ensemble_sets,self.parent_dataset= bootstrap_ensemble(
+            compute_with_calc(sp_raw_data, self.delta_sub_calc))
+
     def calculate(self, atoms, properties, system_changes):
         Calculator.calculate(self, atoms, properties, system_changes)
 
@@ -102,7 +117,7 @@ class OnlineActiveLearner(Calculator):
                 self.parent_dataset, self.ensemble_sets, new_data=new_data
             )
 
-            self.ensemble_calc = ensemble_trainer(
+            self.ensemble_calc = make_ensemble(
                 self.ensemble_sets, self.training_params, self.n_cores
             )
             self.parent_calls += 1

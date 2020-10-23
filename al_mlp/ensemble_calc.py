@@ -1,7 +1,7 @@
 import numpy as np
 from ase.calculators.calculator import Calculator
-
-
+from al_mlp.calcs import TrainerCalc
+from al_mlp.calcs import DeltaCalc
 __author__ = "Muhammed Shuaibi"
 __email__ = "mshuaibi@andrew.cmu.edu"
 
@@ -50,20 +50,16 @@ class EnsembleCalc(Calculator):
         self.results["forces"] = force_pred
         atoms.info["uncertainty"] = np.array([uncertainty])
     
-    def make_ensemble(ensemble_datasets,trainer,base_calc,n_cores):
+def make_ensemble(ensemble_datasets,trainer,base_calc,n_cores,refs):
         if n_cores == "max":
              ncores = len(ensemble_datasets)
-        pool = Pool(ncores)
         
         input_data = []
         for _, dataset in enumerate(ensemble_datasets):
              inputs = (dataset)
              input_data.append(inputs)
-        calc_parameters = pool.starmap(trainer, input_data)
-        pool.close()
-        pool.join()
-        trainer_calc =  trainer_calc_func(trainer)
-        trained_calcs = [DeltaCalc([trainer_calc, base_calc], "add", self.refs) for params in calc_parameters]
-        ensemble_calc = EnsembleCalc(trained_calcs, training_params)
-             return ensemble_calc  
+        trainer_calc =  TrainerCalc(trainer)
+        trained_calcs = [DeltaCalc([trainer_calc, base_calc], "add", refs) for inputs in input_data]
+        ensemble_calc = EnsembleCalc(trained_calcs, trainer,trainer_calc)
+        return ensemble_calc  
    

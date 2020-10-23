@@ -4,6 +4,7 @@ import os
 #from amptorch.trainer import AtomsTrainer
 from al_mlp.calcs import DeltaCalc
 from al_mlp.al_utils import convert_to_singlepoint, compute_with_calc
+
 import ase.db
 
 
@@ -38,7 +39,7 @@ class OfflineActiveLearner:
     must be True if uncertainty based query methods are to be used. 
      """
     
-    def __init__(self, learner_params, trainer, training_data, parent_calc, base_calc, trainer_calc,Ensemble=False):
+    def __init__(self, learner_params, trainer, training_data, parent_calc, base_calc, trainer_calc,ensemble=False):
         self.learner_params = learner_params
         self.trainer = trainer
         self.training_data = training_data
@@ -59,8 +60,9 @@ class OfflineActiveLearner:
         """
         Prepare the training data by attaching delta values for training.
         """
-        
+        print(self.training_data) 
         raw_data = self.training_data
+        print(raw_data)
         sp_raw_data = convert_to_singlepoint(raw_data)
         parent_ref_image = sp_raw_data[0].copy()
         base_ref_image = compute_with_calc(sp_raw_data[:1],self.base_calc)[0]

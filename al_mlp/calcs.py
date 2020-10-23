@@ -18,8 +18,6 @@ class TrainerCalc(Calculator):
         Calculator.__init__(self)
         
         # might remove this to allow any trainer with a predict method.
-        if not isinstance(trainer, AtomsTrainer):
-            raise ValueError('All the calculators should be inherited form the ase\'s Calculator class')
             
         self.trainer = trainer
         
@@ -29,6 +27,7 @@ class TrainerCalc(Calculator):
         self.results["forces"] = calculated_atoms.get_forces(apply_constraint=False)
         
 class DeltaCalc(Calculator):
+    implemented_properties = ['energy','forces']
 
     def __init__(self, calcs, mode, refs, atoms=None):
         """Implementation of sum of calculators.

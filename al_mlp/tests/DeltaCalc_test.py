@@ -45,12 +45,18 @@ slab.set_pbc(True)
 slab.wrap(pbc=[True] * 3)
 slab.set_calculator(copy.copy(parent_calculator))
 slab.set_initial_magnetic_moments()
-image_copy = [slab]
+image_copy = slab
 # create image with base calculator attached
 base_calc = MorsePotential()
 image_copy.set_calculator(base_calc) 
 
+#add
+delta_calc = DeltaCalc([parent_calculator,base_calc],"add",[slab,image_copy])
+#Set slab calculator to delta calc and evaluate energy
+slab.set_calculator(delta_calc)
+slab.get_potential_energy()
 
+#Sub
 delta_calc = DeltaCalc([parent_calculator,base_calc],"sub",[slab,image_copy])
 #Set slab calculator to delta calc and evaluate energy
 slab.set_calculator(delta_calc)

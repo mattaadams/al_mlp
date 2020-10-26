@@ -23,9 +23,9 @@ class TrainerCalc(Calculator):
         self.trainer = trainer
         
     def calculate(self, atoms, properties, system_changes):
-        calculated_atoms = self.trainer.predict([atoms])[0]
-        self.results["energy"] = calculated_atoms.get_potential_energy(apply_constraint=False)
-        self.results["forces"] = calculated_atoms.get_forces(apply_constraint=False)
+        calculated_atoms = self.trainer.predict([atoms])
+        self.results["energy"] = calculated_atoms["energy"] 
+        self.results["forces"] = calculated_atoms["forces"]
         
 class DeltaCalc(Calculator):
     implemented_properties = ['energy','forces']
@@ -68,7 +68,6 @@ class DeltaCalc(Calculator):
         "sub" mode: calculates the delta between the two given calculators.
         "add" mode: calculates the predicted value given the predicted delta calculator and the base calc.
         """
-        Calculator.calculate(self,atoms,properties,system_changes) 
         if atoms.calc is not None:
             atoms.calc = self.calcs[0]
             self.calcs[0].results["energy"] = atoms.get_potential_energy(apply_constraint=False)
@@ -87,12 +86,11 @@ class DeltaCalc(Calculator):
                                           self.refs[i].get_potential_energy(apply_constraint=False))
                 self.results["energy"] = delta_energies[0] - delta_energies[1]
                 
-         #  for k in properties:
-         #      print(k)
-          #      if k not in self.results:
-          #          self.results[k] = calc.results[k]
-          #      else:
-          #          self.results[k] -= calc.results[k]         
+            for k in properties:
+                if k not in self.results:
+                   self.results[k] = calc.results[k]
+                else:
+                    self.results[k] -= calc.results[k]         
                     
         if self.mode == "add":
             delta_energies = []

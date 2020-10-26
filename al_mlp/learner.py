@@ -1,10 +1,9 @@
 import random
 import os
 #from amptorch.ase_utils import AMPtorch
-#from amptorch.trainer import AtomsTrainer
 from al_mlp.calcs import DeltaCalc
 from al_mlp.al_utils import convert_to_singlepoint, compute_with_calc
-
+from al_mlp.calcs import TrainerCalc
 import ase.db
 
 
@@ -90,7 +89,7 @@ class OfflineActiveLearner:
                 self.query_data(sample_candidates)
                 
             self.trainer.train(self.training_data)
-            trainer_calc = self.make_trainer_calc()
+            trainer_calc = TrainerCalc(self.trainer)
             trained_calc = DeltaCalc([trainer_calc, self.base_calc], "add", self.refs)
             # run atomistic_method using trained ml calculator  
             atomistic_method.run(calc=trained_calc, filename=fn_label)
@@ -134,8 +133,4 @@ class OfflineActiveLearner:
         queried_images = random.sample(sample_candidates,samples_to_retrain)
         return queried_images
        
-    def make_trainer_calc(self):
-        """
-        Default trainer calc after train. Assumes trainer has a 'get_calc' method.
-        """
         return self.trainer.get_calc()  

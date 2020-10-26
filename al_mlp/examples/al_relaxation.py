@@ -3,6 +3,7 @@ import ase
 import copy
 from al_mlp.learner import OfflineActiveLearner
 from al_mlp.calcs import TrainerCalc
+from al_mlp.atomistic_methods import Relaxation
 from ase.calculators.emt import EMT
 from ase.calculators.morse import MorsePotential
 from ase import Atoms
@@ -90,20 +91,15 @@ config = {
 }
 
 trainer = AtomsTrainer(config)
-
-training_data = images[0].copy
-parent_calc = EMT()
-base_calc = MorsePotential() 
-trainer_calc = TrainerCalc(trainer) 
-
+starting_image = images[0]
+print(starting_image)
 learner = OfflineActiveLearner(
              learner_params,
              trainer=AtomsTrainer(config),
              training_data=images,
              parent_calc=EMT(),
              base_calc=MorsePotential(),
-             trainer_calc=TrainerCalc(trainer))
+         )
 
 
-
-learner.learn(atomistic_method=Relaxation(initial_geometry=images[0].copy(),optimizer=BFGS,fmax=0.05,steps=50))
+learner.learn(atomistic_method=Relaxation(initial_geometry=starting_image,optimizer=BFGS,fmax=0.05,steps=50))

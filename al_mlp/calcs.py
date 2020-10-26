@@ -76,45 +76,52 @@ class DeltaCalc(Calculator):
             self.calcs[0].calculate(atoms, properties, system_changes)
         
         self.calcs[1].calculate(atoms, properties, system_changes)  
-        
+       # properties = ['energy'] 
+        print("properties",properties)
         if self.mode == "sub":
             delta_energies = []
             if "energy" in properties:
+               # print('energysub')
                 for i in range(len(self.calcs)):
                     self.refs[i].calc = self.calcs[i]
                     delta_energies.append(self.calcs[i].results["energy"] -
                                           self.refs[i].get_potential_energy(apply_constraint=False))
                 self.results["energy"] = delta_energies[0] - delta_energies[1]
             for calc in self.calcs:
-               print("properties",properties)     
+             #  print("properties",properties)     
                for k in properties:
-                 print(k)
-                 print("subresultsk",calc.results[k])
-                 print('results',self.results)
+        #         print(k)
+        #         print("subresultsk",calc.results[k])
+        #         print('results',self.results)
                  if k not in self.results:
                    self.results[k] = calc.results[k]
                  else:
                     self.results[k] -= calc.results[k]         
-                    
+           
         if self.mode == "add":
+          #  print("add")
+          #  print("properties",properties)
             delta_energies = []
             if "energy" in properties:
+             #   print('energyinadd')
                 delta_energies.append(self.calcs[0].results["energy"])
                 delta_energies.append(self.calcs[1].results["energy"] - 
                                       self.refs[1].get_potential_energy(apply_constraint=False))
                 delta_energies.append(self.refs[0].get_potential_energy(apply_constraint=False))
                 self.results["energy"] = np.sum(delta_energies)
             for calc in self.calcs:
-              print("properties",properties)     
+         #     print('calc0res',self.calcs[0].results)
+         #     print('calc1res',self.calcs[1].results)
+            #  print("properties",properties)     
               for k in properties:
-                print('k',k)
-                print("addresultsk",calc.results[k])
-                print("results",self.results)
+         #       print('k',k)
+         #       print("addresultsk",calc.results[k])
+         #       print("results",self.results)
                 if k not in self.results:
                     self.results[k] = calc.results[k]
                 else:
                     self.results[k] += calc.results[k]
-
+       # properties = ["energy"]
     def reset(self):
         """Clear all previous results recursively from all of the calculators."""
         super().reset()

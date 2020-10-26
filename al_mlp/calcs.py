@@ -2,6 +2,7 @@ import numpy as np
 import copy
 from ase.calculators.calculator import Calculator, Parameters, all_changes
 from ase.calculators.calculator import PropertyNotImplementedError
+import sys
 
 class TrainerCalc(Calculator):
     """Atomistics Machine-Learning Potential (AMP) ASE calculator
@@ -57,7 +58,7 @@ class DeltaCalc(Calculator):
         if len(calcs) != len(refs):
             raise ValueError('The length of the weights must be the same as the number of calculators!')
 
-        self.calcs_copy = calcs
+        self.calcs = calcs
         self.mode = mode
         self.refs = refs
 
@@ -67,30 +68,31 @@ class DeltaCalc(Calculator):
         "sub" mode: calculates the delta between the two given calculators.
         "add" mode: calculates the predicted value given the predicted delta calculator and the base calc.
         """
-        
-        self.calcs = [copy.copy(calc) for calc in self.calcs_copy]
-        
+        Calculator.calculate(self,atoms,properties,system_changes) 
         if atoms.calc is not None:
+            atoms.calc = self.calcs[0]
             self.calcs[0].results["energy"] = atoms.get_potential_energy(apply_constraint=False)
             self.calcs[0].results["forces"] = atoms.get_forces(apply_constraint=False)
         else:
             self.calcs[0].calculate(atoms, properties, system_changes)
-            
-        self.calcs[1].calculate(atoms, properties, system_changes)
+        
+        self.calcs[1].calculate(atoms, properties, system_changes)  
         
         if self.mode == "sub":
             delta_energies = []
             if "energy" in properties:
                 for i in range(len(self.calcs)):
+                    self.refs[i].calc = self.calcs[i]
                     delta_energies.append(self.calcs[i].results["energy"] -
                                           self.refs[i].get_potential_energy(apply_constraint=False))
                 self.results["energy"] = delta_energies[0] - delta_energies[1]
                 
-            for k in properties:
-                if k not in self.results:
-                    self.results[k] = calc.results[k]
-                else:
-                    self.results[k] -= calc.results[k]
+         #  for k in properties:
+         #      print(k)
+          #      if k not in self.results:
+          #          self.results[k] = calc.results[k]
+          #      else:
+          #          self.results[k] -= calc.results[k]         
                     
         if self.mode == "add":
             delta_energies = []

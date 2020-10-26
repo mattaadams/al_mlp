@@ -30,25 +30,21 @@ class OfflineActiveLearner:
     base_calc: ase Calculator object
         Calculator used to calculate delta data for training.
         
-    trainer_calc: uninitialized ase Calculator object
-        The trainer_calc should produce an ase Calculator instance
-        capable of force and energy calculations via TrainerCalc(trainer)
-        
     ensemble: boolean.
     Whether to train an ensemble of models to make predictions. ensemble
     must be True if uncertainty based query methods are to be used. 
      """
     
-    def __init__(self, learner_params, trainer, training_data, parent_calc, base_calc, trainer_calc,ensemble=False):
+    def __init__(self, learner_params, trainer, training_data, parent_calc, base_calc,ensemble=False):
         self.learner_params = learner_params
         self.trainer = trainer
         self.training_data = training_data
         self.parent_calc = parent_calc
         self.base_calc = base_calc
-        self.trainer_calc_func = trainer_calc
         self.calcs = [parent_calc, base_calc]
         self.ensemble = ensemble
         self.init_training_data()
+        self.iteration = 0
         if ensemble:
              assert isinstance(ensemble,ent) and ensemble > 1, "Invalid ensemble!"
              self.training_data, self.parent_dataset = bootstrap_ensemble(
@@ -60,9 +56,9 @@ class OfflineActiveLearner:
         """
         Prepare the training data by attaching delta values for training.
         """
-        print(self.training_data) 
+        #print(self.training_data) 
         raw_data = self.training_data
-        print(raw_data)
+        #print(raw_data)
         sp_raw_data = convert_to_singlepoint(raw_data)
         parent_ref_image = sp_raw_data[0].copy()
         base_ref_image = compute_with_calc(sp_raw_data[:1],self.base_calc)[0]
@@ -86,15 +82,15 @@ class OfflineActiveLearner:
         file_dir = self.learner_params["file_dir"]
         queries_db = ase.db.connect("{}.db".format(filename))
         os.makedirs(file_dir, exist_ok=True)
-        self.iterations = 0
-
+        self.iteration = 0
+        terminate = False
         while not terminate:
             fn_label = f"{file_dir}{filename}_iter_{self.iteration}"
-            if self.iterations > 0:
+            if self.iteration > 0:
                 self.query_data(sample_candidates)
                 
             self.trainer.train(self.training_data)
-            trainer_calc = self.trainer_calc_func(self.trainer)
+            trainer_calc = self.make_trainer_calc()
             trained_calc = DeltaCalc([trainer_calc, self.base_calc], "add", self.refs)
             # run atomistic_method using trained ml calculator  
             atomistic_method.run(calc=trained_calc, filename=fn_label)
@@ -102,7 +98,7 @@ class OfflineActiveLearner:
             sample_candidates = atomistic_method.get_trajectory(filename=fn_label)
             
             terminate = self.check_terminate()
-            self.iterations += 1
+            self.iteration += 1
             
         return trained_calc
             
@@ -137,4 +133,9 @@ class OfflineActiveLearner:
         """
         queried_images = random.sample(sample_candidates,samples_to_retrain)
         return queried_images
-        
+       
+    def make_trainer_calc(self):
+        """
+        Default trainer calc after train. Assumes trainer has a 'get_calc' method.
+        """
+        return self.trainer.get_calc()  

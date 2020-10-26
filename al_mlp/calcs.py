@@ -87,16 +87,9 @@ class DeltaCalc(Calculator):
                     delta_energies.append(self.calcs[i].results["energy"] -
                                           self.refs[i].get_potential_energy(apply_constraint=False))
                 self.results["energy"] = delta_energies[0] - delta_energies[1]
-            for calc in self.calcs:
-             #  print("properties",properties)     
-               for k in properties:
-        #         print(k)
-        #         print("subresultsk",calc.results[k])
-        #         print('results',self.results)
-                 if k not in self.results:
-                   self.results[k] = calc.results[k]
-                 else:
-                    self.results[k] -= calc.results[k]         
+            for k in properties:
+                if k not in self.results:
+                    self.results[k] = self.calcs[0].results[k] - self.calcs[1].results[k]
            
         if self.mode == "add":
           #  print("add")
@@ -109,19 +102,10 @@ class DeltaCalc(Calculator):
                                       self.refs[1].get_potential_energy(apply_constraint=False))
                 delta_energies.append(self.refs[0].get_potential_energy(apply_constraint=False))
                 self.results["energy"] = np.sum(delta_energies)
-            for calc in self.calcs:
-         #     print('calc0res',self.calcs[0].results)
-         #     print('calc1res',self.calcs[1].results)
-            #  print("properties",properties)     
-              for k in properties:
-         #       print('k',k)
-         #       print("addresultsk",calc.results[k])
-         #       print("results",self.results)
+            for k in properties:
                 if k not in self.results:
-                    self.results[k] = calc.results[k]
-                else:
-                    self.results[k] += calc.results[k]
-       # properties = ["energy"]
+                    self.results[k] = self.calcs[0].results[k] + self.calcs[1].results[k]
+   # properties = ["energy"]
     def reset(self):
         """Clear all previous results recursively from all of the calculators."""
         super().reset()

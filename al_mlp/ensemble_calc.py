@@ -48,11 +48,6 @@ class EnsembleCalc(Calculator):
         self.results["energy"] = energy_pred
         self.results["forces"] = force_pred
         atoms.info["uncertainty"] = np.array([uncertainty])
-    def make_trainer_calc(self):
-        """
-        Default trainer calc after train. Assumes trainer has a 'get_calc' method.
-        """
-        return self.trainer.get_calc()
     
 def make_ensemble(ensemble_datasets,trainer,base_calc,n_cores,refs):
         if n_cores == "max":
@@ -62,7 +57,7 @@ def make_ensemble(ensemble_datasets,trainer,base_calc,n_cores,refs):
         for _, dataset in enumerate(ensemble_datasets):
              inputs = (dataset)
              trainer.train(inputs)
-             trained_calcs.append(self.make_trainer_calc())
+             trained_calcs.append(TrainerCalc(trainer))
         ensemble_calc = EnsembleCalc(trained_calcs, trainer)
         return ensemble_calc  
    

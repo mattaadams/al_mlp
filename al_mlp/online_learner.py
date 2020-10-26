@@ -52,7 +52,7 @@ class OnlineActiveLearner(Calculator):
     implemented_properties = ["energy", "forces"]
 
     def __init__(
-        self, learner_params, parent_dataset, parent_calc,base_calc,trainer,trainer_calc, n_ensembles, n_cores
+        self, learner_params, parent_dataset, parent_calc,base_calc,trainer, n_ensembles, n_cores
     ):
         Calculator.__init__(self)
 
@@ -61,7 +61,6 @@ class OnlineActiveLearner(Calculator):
         self.base_calc = base_calc
         self.calcs = [parent_calc, base_calc]
         self.trainer = trainer
-        self.trainer_calc_func = trainer_calc
         self.learner_params = learner_params
         self.n_cores = n_cores
         self.ensemble_sets, self.parent_dataset = bootstrap_ensemble(
@@ -74,6 +73,8 @@ class OnlineActiveLearner(Calculator):
 
         self.uncertain_tol = learner_params["uncertain_tol"]
         self.parent_calls = 0
+        self.init_training_data()
+
     def init_training_data(self):
         """
         Prepare the training data by attaching delta values for training.
@@ -125,3 +126,4 @@ class OnlineActiveLearner(Calculator):
             db.write(None)
         self.results["energy"] = energy_pred
         self.results["forces"] = force_pred
+

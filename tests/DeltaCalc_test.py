@@ -1,10 +1,10 @@
-from calcs import DeltaCalc
+from al_mlp.calcs import DeltaCalc
 from ase.calculators.emt import EMT
 from ase.calculators.morse import MorsePotential
 import numpy as np
 import ase
 import copy
-from offline_active_learner import OfflineActiveLearner
+from al_mlp.offline_active_learner import OfflineActiveLearner
 from ase.calculators.emt import EMT
 from ase.calculators.morse import MorsePotential
 from ase import Atoms
@@ -13,7 +13,7 @@ from ase.constraints import FixAtoms
 from ase.optimize import BFGS, QuasiNewton
 from ase.build import bulk
 from ase.utils.eos import EquationOfState
-from base_calcs.morse import MultiMorse
+from al_mlp.base_calcs.morse import MultiMorse
 parent_calculator = EMT()
 energies = []
 volumes = []

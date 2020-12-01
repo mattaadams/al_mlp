@@ -1,4 +1,3 @@
--e git+https://github.com/mattaadams/al_mlp.git@1f291ae709bd5e09da8bead774fe32cf4be95233#egg=al_mlp
 ase==3.20.1
 attrs==20.3.0
 cycler==0.10.0
